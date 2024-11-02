@@ -15,7 +15,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [isSubscribed, setIsSubscribed] = useState(!!email);
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://fortniteshopsite.netlify.app/';
 
   const subscribeToNotifications = async (email: string) => {
     setIsLoading(true);
