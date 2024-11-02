@@ -109,7 +109,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-black dark:from-white to-black/80 dark:to-white/80 bg-clip-text text-transparent">
-                ITEM SHOP
+                ITEM STORE
               </h1>
               <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
                 <time className="text-sm font-medium text-black/70 dark:text-white/70">

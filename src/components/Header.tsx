@@ -13,7 +13,7 @@ export function Header({ isLoading, onRefresh }: HeaderProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-              ITEM SHOP
+              ITEM STORE
             </h1>
             <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5">
               <Clock className="w-4 h-4 text-white/70" />
