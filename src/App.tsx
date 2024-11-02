@@ -51,7 +51,7 @@ function App() {
     loadShopData();
   }, []);
 
-  const tabs = ['Sets', ...new Set(shopData.map(section => section.name))];
+  const tabs = ['Sets', ...new Set(shopData.filter(section => section.name !== 'Jam Tracks').map(section => section.name))];
   const activeSection = shopData.find(section => section.name === activeTab);
 
   console.log('Available sections:', shopData.map(s => s.name));
@@ -78,15 +78,6 @@ function App() {
 
   const content = activeTab === 'Wishlist' ? (
     <WishlistTab onItemClick={setSelectedItem} />
-  ) : activeTab === 'Jam Tracks' && (!filteredSection?.items.length) ? (
-    <div className="flex flex-col items-center justify-center p-12 text-center">
-      <div className="text-xl font-bold text-black/70 dark:text-white/70 mb-2">
-        No Jam Tracks Available
-      </div>
-      <div className="text-sm text-black/50 dark:text-white/50">
-        Check back later for new music packs in the item shop!
-      </div>
-    </div>
   ) : activeTab === 'Sets' ? (
     <SetCollections 
       items={shopData.flatMap(section => section.items)}

@@ -155,7 +155,7 @@ export async function fetchShopData() {
 
     // Sort sections to maintain consistent order
     sections.sort((a, b) => {
-      const order = ['Featured', 'Daily', 'Special', 'Bundle', 'Festival Gear', 'Jam Tracks'];
+      const order = ['Featured', 'Daily', 'Special', 'Bundle', 'Festival Gear'];
       return order.indexOf(a.name) - order.indexOf(b.name);
     });
 
