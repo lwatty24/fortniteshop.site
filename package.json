@@ -7,10 +7,11 @@
     "dev": "vite",
     "server": "tsx watch server/index.ts",
     "start": "concurrently \"npm run dev\" \"npm run server\"",
-    "build": "vite build --output dist",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:emails": "tsx scripts/test-wishlist-email.ts"
+    "test:emails": "tsx scripts/test-wishlist-email.ts",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.1",
