@@ -18,6 +18,8 @@ import { WishlistTab } from './components/WishlistTab';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationSettings } from './components/NotificationSettings';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { Toaster } from 'sonner';
+import { useWishlistNotifications } from './hooks/useWishlistNotifications';
 
 function App() {
   const [shopData, setShopData] = useState<ShopSection[]>([]);
@@ -38,7 +40,6 @@ function App() {
       const data = await fetchShopData();
       setShopData(data);
       setActiveTab(data.find(section => section.name === 'Outfit') ? 'Outfit' : data[0]?.name || '');
-      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (err) {
       setError('Unable to load shop data. Please try again later.');
     } finally {
@@ -50,6 +51,8 @@ function App() {
   useEffect(() => {
     loadShopData();
   }, []);
+
+  useWishlistNotifications(shopData.flatMap(section => section.items));
 
   const tabs = ['Sets', ...new Set(shopData.filter(section => section.name !== 'Jam Tracks').map(section => section.name))];
   const activeSection = shopData.find(section => section.name === activeTab);
@@ -95,6 +98,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#1A1A1A] transition-colors">
+      <Toaster 
+        position="bottom-right"
+        theme={theme === 'dark' ? 'dark' : 'light'}
+        closeButton
+        richColors
+        dismissible
+        expand={false}
+      />
       <header className="sticky top-0 z-30 bg-gradient-to-b from-white/95 via-white/90 to-white/80 dark:from-black/95 dark:via-black/90 dark:to-black/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5">
         <div className="max-w-[1800px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
