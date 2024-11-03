@@ -29,6 +29,7 @@ export interface ShopItem {
   isBundle?: boolean;
   bundleItems?: BundleItem[];
   isFestivalGear?: boolean;
+  battlepass?: boolean;
 }
 
 export interface ShopSection {

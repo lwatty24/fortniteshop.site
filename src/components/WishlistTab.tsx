@@ -266,13 +266,15 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
                                   key={item.id}
                                   item={{
                                     ...item,
-                                    lastSeen: item.lastSeen || item.added
+                                    lastSeen: item.lastSeen || item.added,
+                                    battlepass: item.battlepass || item.description?.toLowerCase().includes('battle pass')
                                   }}
                                   onClick={() => {
                                     handleWishlist(item);
                                     onItemClick({
                                       ...item,
-                                      lastSeen: item.lastSeen || item.added
+                                      lastSeen: item.lastSeen || item.added,
+                                      battlepass: item.battlepass || item.description?.toLowerCase().includes('battle pass')
                                     });
                                     handleCloseSearch();
                                   }}

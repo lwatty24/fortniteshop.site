@@ -123,6 +123,13 @@ export const ItemCard = memo(function ItemCard({
           {/* Content */}
           <div className="relative z-10 p-3">
             <div className="absolute top-3 right-3 z-10 flex gap-2">
+              {shopItem.battlepass && (
+                <div className="px-2 py-1 rounded-lg bg-yellow-500/20 backdrop-blur-sm">
+                  <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                    Battle Pass
+                  </span>
+                </div>
+              )}
               {showWishlistButton && onWishlist && (
                 <WishlistButton
                   item={shopItem}
