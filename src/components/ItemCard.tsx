@@ -102,7 +102,7 @@ export const ItemCard = React.memo(function ItemCard({
       animate="animate"
       whileHover={{ scale: isRefreshing ? 1 : 1.02, y: -5 }}
       whileTap={{ scale: isRefreshing ? 1 : 0.98 }}
-      className={`group cursor-pointer ${rarity.glow} transition-all duration-300 ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}
+      className={`group cursor-pointer ${rarity.glow} transition-all duration-300 ${isRefreshing ? 'opacity-50' : 'opacity-100'} touch-manipulation`}
       onClick={isRefreshing ? undefined : onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -113,7 +113,6 @@ export const ItemCard = React.memo(function ItemCard({
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={() => setShowPreview(false)}
-      className="touch-manipulation"
     >
       <div className={`relative rounded-xl bg-gradient-to-br ${rarity.gradient} p-[1.5px] overflow-hidden`}>
         <RarityPulse color={rarity.color} />
