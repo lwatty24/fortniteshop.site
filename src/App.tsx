@@ -23,6 +23,8 @@ import { useWishlistNotifications } from './hooks/useWishlistNotifications';
 import { ShopHistory } from './components/ShopHistory';
 import { useShopHistory } from './hooks/useShopHistory';
 import { ShopTimer } from './components/ShopTimer';
+import { QuickActions } from './components/QuickActions';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 function App() {
   const [shopData, setShopData] = useState<ShopSection[]>([]);
@@ -35,6 +37,7 @@ function App() {
   const { theme, toggleTheme } = useTheme();
   const [compareItems, setCompareItems] = useState<ShopItem[]>([]);
   const { addToHistory } = useShopHistory();
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   const loadShopData = async () => {
     try {
@@ -113,6 +116,18 @@ function App() {
       compareItems={compareItems}
     />
   ) : null;
+
+  useKeyboardShortcuts({
+    onSearch: () => setShowSearch(true),
+    onClose: () => {
+      setSelectedItem(null);
+      setShowQuickActions(false);
+    },
+    onRefresh: loadShopData,
+    onThemeToggle: toggleTheme,
+    onWishlist: () => setActiveTab('Wishlist'),
+    onQuickActions: () => setShowQuickActions(true)
+  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#1A1A1A] transition-colors">
@@ -223,6 +238,17 @@ function App() {
           />
         )}
       </AnimatePresence>
+
+      <QuickActions
+        onSearch={() => setShowSearch(true)}
+        onThemeToggle={toggleTheme}
+        onRefresh={loadShopData}
+        onWishlist={() => setActiveTab('Wishlist')}
+        onSettings={() => {}}
+        theme={theme}
+        isOpen={showQuickActions}
+        onClose={() => setShowQuickActions(false)}
+      />
     </div>
   );
 }
