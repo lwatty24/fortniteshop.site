@@ -13,6 +13,20 @@ interface WishlistTabProps {
   onItemClick: (item: ShopItem) => void;
 }
 
+const slideUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30
+    }
+  },
+  exit: { opacity: 0, y: -20 }
+};
+
 export function WishlistTab({ onItemClick }: WishlistTabProps) {
   const { 
     query, 
