@@ -18,6 +18,7 @@ interface ItemCardProps {
   isSelected?: boolean;
   isWishlisted?: boolean;
   showWishlistButton?: boolean;
+  isTouchDevice?: boolean;
 }
 
 const floatingAnimation = {
@@ -40,7 +41,8 @@ export const ItemCard = React.memo(function ItemCard({
   isRefreshing, 
   isSelected, 
   isWishlisted, 
-  showWishlistButton = true 
+  showWishlistButton = true, 
+  isTouchDevice = false 
 }: ItemCardProps) {
   const rarity = rarityColors[(shopItem.rarity || 'common').toLowerCase() as keyof typeof rarityColors] || rarityColors.common;
   const [showPreview, setShowPreview] = useState(false);
@@ -86,6 +88,13 @@ export const ItemCard = React.memo(function ItemCard({
     onCompare?.();
   }, [onCompare]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isTouchDevice) {
+      e.preventDefault();
+      setShowPreview(true);
+    }
+  };
+
   return (
     <motion.div
       variants={floatingAnimation}
@@ -102,6 +111,9 @@ export const ItemCard = React.memo(function ItemCard({
           setMousePosition({ x: e.clientX, y: e.clientY });
         }
       }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={() => setShowPreview(false)}
+      className="touch-manipulation"
     >
       <div className={`relative rounded-xl bg-gradient-to-br ${rarity.gradient} p-[1.5px] overflow-hidden`}>
         <RarityPulse color={rarity.color} />

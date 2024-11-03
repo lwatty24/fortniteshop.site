@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Prevent crawling of API routes
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://fortniteshop.site/sitemap.xml 

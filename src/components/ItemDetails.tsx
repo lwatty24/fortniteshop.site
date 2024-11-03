@@ -6,6 +6,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { rarityColors } from '../constants/rarity';
 import { useWishlist } from '../contexts/WishlistContext';
 import { WishlistButton } from './WishlistButton';
+import { ItemHistoryTimeline } from './ItemHistoryTimeline';
 
 interface ItemDetailsProps {
   item: ShopItem;
@@ -111,6 +112,19 @@ export function ItemDetails({ item, onClose }: ItemDetailsProps) {
         </div>
       </div>
     );
+  };
+
+  const structuredData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": item.name,
+    "description": item.description,
+    "image": item.image,
+    "offers": {
+      "@type": "Offer",
+      "price": item.price,
+      "priceCurrency": "VBucks"
+    }
   };
 
   return (
@@ -349,6 +363,10 @@ export function ItemDetails({ item, onClose }: ItemDetailsProps) {
           </div>
         </div>
       </motion.div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
     </motion.div>
   );
 }
