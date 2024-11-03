@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
-import { RotateCcw, Clock } from 'lucide-react';
+import { RotateCcw, Calendar } from 'lucide-react';
+import { ShopTimer } from './ShopTimer';
 
 interface HeaderProps {
   isLoading: boolean;
@@ -8,18 +9,21 @@ interface HeaderProps {
 
 export function Header({ isLoading, onRefresh }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 bg-gradient-to-b from-black/90 to-black/80 backdrop-blur-xl border-b border-white/5">
+    <header className="sticky top-0 z-30 bg-gradient-to-b from-white/95 via-white/90 to-white/80 dark:from-black/95 dark:via-black/90 dark:to-black/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5">
       <div className="max-w-[1800px] mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-black dark:from-white to-black/80 dark:to-white/80 bg-clip-text text-transparent">
               ITEM STORE
             </h1>
-            <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5">
-              <Clock className="w-4 h-4 text-white/70" />
-              <time className="text-sm font-medium text-white/70">
-                {format(new Date(), 'MMM d, yyyy')}
-              </time>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
+                <Calendar className="w-4 h-4 text-black/70 dark:text-white/70" />
+                <time className="text-sm font-medium text-black/70 dark:text-white/70">
+                  {format(new Date(), 'MMM d, yyyy')}
+                </time>
+              </div>
+              <ShopTimer />
             </div>
           </div>
           

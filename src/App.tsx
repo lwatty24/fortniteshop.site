@@ -5,7 +5,7 @@ import { ErrorState } from './components/ErrorState';
 import { TabGroup } from './components/TabGroup';
 import { ShopSection, ShopItem } from './types';
 import { format } from 'date-fns';
-import { RotateCcw, Search, Sun, Moon, Heart } from 'lucide-react';
+import { RotateCcw, Search, Sun, Moon, Heart, Clock, Calendar } from 'lucide-react';
 import { fetchShopData } from './api/fortnite';
 import { ItemDetails } from './components/ItemDetails';
 import { useTheme } from './contexts/ThemeContext';
@@ -20,6 +20,9 @@ import { NotificationSettings } from './components/NotificationSettings';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { Toaster } from 'sonner';
 import { useWishlistNotifications } from './hooks/useWishlistNotifications';
+import { ShopHistory } from './components/ShopHistory';
+import { useShopHistory } from './hooks/useShopHistory';
+import { ShopTimer } from './components/ShopTimer';
 
 function App() {
   const [shopData, setShopData] = useState<ShopSection[]>([]);
@@ -31,6 +34,7 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [compareItems, setCompareItems] = useState<ShopItem[]>([]);
+  const { addToHistory } = useShopHistory();
 
   const loadShopData = async () => {
     try {
@@ -39,6 +43,9 @@ function App() {
       setError(null);
       const data = await fetchShopData();
       setShopData(data);
+      
+      addToHistory(data);
+      
       setActiveTab(data.find(section => section.name === 'Outfit') ? 'Outfit' : data[0]?.name || '');
     } catch (err) {
       setError('Unable to load shop data. Please try again later.');
@@ -54,7 +61,16 @@ function App() {
 
   useWishlistNotifications(shopData.flatMap(section => section.items));
 
-  const tabs = ['Sets', ...new Set(shopData.filter(section => section.name !== 'Jam Tracks').map(section => section.name))];
+  const tabs = [
+    'Sets', 
+    'History', 
+    ...new Set(
+      shopData
+        .filter(section => section.name !== 'Jam Tracks' && section.name !== 'Bundle')
+        .map(section => section.name)
+    ),
+    'Bundle',
+  ];
   const activeSection = shopData.find(section => section.name === activeTab);
 
   console.log('Available sections:', shopData.map(s => s.name));
@@ -86,6 +102,8 @@ function App() {
       items={shopData.flatMap(section => section.items)}
       onItemClick={setSelectedItem}
     />
+  ) : activeTab === 'History' ? (
+    <ShopHistory />
   ) : filteredSection ? (
     <ShopSectionComponent
       section={filteredSection}
@@ -113,10 +131,14 @@ function App() {
               <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-black dark:from-white to-black/80 dark:to-white/80 bg-clip-text text-transparent">
                 ITEM STORE
               </h1>
-              <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
-                <time className="text-sm font-medium text-black/70 dark:text-white/70">
-                  {format(new Date(), 'MMM d, yyyy')}
-                </time>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
+                  <Calendar className="w-4 h-4 text-black/70 dark:text-white/70" />
+                  <time className="text-sm font-medium text-black/70 dark:text-white/70">
+                    {format(new Date(), 'MMM d, yyyy')}
+                  </time>
+                </div>
+                <ShopTimer />
               </div>
             </div>
             
