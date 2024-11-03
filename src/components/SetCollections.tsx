@@ -111,6 +111,16 @@ export function SetCollections({ items, onItemClick }: SetCollectionsProps) {
                 </button>
 
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleCompareToggle(setName)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      selectedSets?.includes(setName)
+                        ? 'bg-blue-500/10 text-blue-500'
+                        : 'hover:bg-black/5 dark:hover:bg-white/5 text-black/40 dark:text-white/40'
+                    }`}
+                  >
+                    <Scale className="w-4 h-4" />
+                  </button>
                   <span className="text-sm text-black/40 dark:text-white/40">
                     {items.length} items
                   </span>
