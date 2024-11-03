@@ -69,11 +69,9 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
   }, [query, performSearch]);
 
   const handleSearch = useCallback((searchQuery: string) => {
-    if (searchQuery.trim()) {
-      setQuery(searchQuery);
-      if (searchQuery.length >= 2) {
-        addRecentSearch(searchQuery);
-      }
+    setQuery(searchQuery);
+    if (searchQuery.trim().length >= 2) {
+      addRecentSearch(searchQuery.trim());
     }
   }, [setQuery, addRecentSearch]);
 
