@@ -141,47 +141,66 @@ function processShopData(data: any) {
   return sections;
 }
 
+// In-memory cache with pre-filtered results
+const searchCache = new Map<string, {
+  results: any[];
+  timestamp: number;
+}>();
+
+const CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
+const MAX_RESULTS = 25;
+
 export async function searchCosmetics(query: string) {
+  const cacheKey = query.toLowerCase();
+  const now = Date.now();
+  const cached = searchCache.get(cacheKey);
+
+  if (cached && now - cached.timestamp < CACHE_DURATION) {
+    return cached.results;
+  }
+
   try {
-    // Use a more lenient search endpoint with partial matching
-    const response = await fetch(`https://fortnite-api.com/v2/cosmetics/br/search/all?name=${query}&matchMethod=contains&language=en`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(
+      `https://fortnite-api.com/v2/cosmetics/br/search/all?name=${encodeURIComponent(query)}&matchMethod=contains&language=en`,
+      { signal: controller.signal }
+    );
+    
+    clearTimeout(timeoutId);
     const data = await response.json();
 
     if (!data.data) return [];
 
-    // Ensure we always work with an array of items
     const items = Array.isArray(data.data) ? data.data : [data.data];
+    
+    const results = items
+      .filter(item => item.name.toLowerCase().includes(cacheKey))
+      .slice(0, MAX_RESULTS)
+      .map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        rarity: item.rarity.value,
+        type: item.type.value,
+        image: item.images.icon,
+        featuredImage: item.images.featured || item.images.icon,
+        added: item.added,
+        price: null,
+        series: item.series?.value || null,
+        isFromSearch: true
+      }));
 
-    // Sort results by name relevance to the search query
-    const sortedItems = items.sort((a, b) => {
-      const aNameMatch = a.name.toLowerCase().indexOf(query.toLowerCase());
-      const bNameMatch = b.name.toLowerCase().indexOf(query.toLowerCase());
-      return aNameMatch - bNameMatch;
-    });
+    searchCache.set(cacheKey, { results, timestamp: now });
+    return results;
 
-    // Take top 25 results after sorting
-    return sortedItems.slice(0, 25).map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      rarity: item.rarity.value,
-      type: item.type.value,
-      image: item.images.icon,
-      featuredImage: item.images.featured || item.images.icon,
-      added: item.added,
-      price: null,
-      series: item.series?.value || null,
-      set: item.set?.value || null,
-      setImage: item.set?.image || null,
-      history: {
-        firstSeen: item.shopHistory?.[0] || item.added,
-        lastSeen: item.shopHistory?.[item.shopHistory.length - 1] || item.added,
-        occurrences: item.shopHistory?.length || 0
-      },
-      isFromSearch: true
-    }));
   } catch (error) {
-    console.error('Error searching cosmetics:', error);
+    if (error.name === 'AbortError') {
+      console.log('Search request timed out');
+    } else {
+      console.error('Search error:', error);
+    }
     return [];
   }
 }

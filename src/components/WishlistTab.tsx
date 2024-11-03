@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
-import { Search, Loader2, X } from 'lucide-react';
+import { Search, Loader2, X, Heart, ChevronRight, Clock } from 'lucide-react';
 import { searchCosmetics } from '../api/fortnite';
 import { useWishlist } from '../contexts/WishlistContext';
 import { ItemCard } from './ItemCard';
 import type { ShopItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRecentSearches } from '../hooks/useRecentSearches';
 
 interface WishlistTabProps {
   onItemClick: (item: ShopItem) => void;
@@ -13,33 +14,72 @@ interface WishlistTabProps {
 
 export function WishlistTab({ onItemClick }: WishlistTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const [debouncedQuery] = useDebounce(searchQuery, 200);
   const [searchResults, setSearchResults] = useState<ShopItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const { wishlist, handleWishlist } = useWishlist();
+  const { recentSearches, addRecentSearch, clearRecentSearches } = useRecentSearches();
+  const searchRequestRef = useRef<AbortController | null>(null);
+  const hasSearched = useRef(false);
 
   useEffect(() => {
     const performSearch = async () => {
-      if (debouncedQuery.length < 2) {
+      if (!debouncedQuery || debouncedQuery.length < 2) {
         setSearchResults([]);
         return;
       }
 
+      if (searchRequestRef.current) {
+        searchRequestRef.current.abort();
+      }
+
+      searchRequestRef.current = new AbortController();
       setIsSearching(true);
+
       try {
         const results = await searchCosmetics(debouncedQuery);
-        setSearchResults(results);
+        if (results && results.length > 0) {
+          setSearchResults(results);
+          if (!hasSearched.current) {
+            addRecentSearch(debouncedQuery);
+            hasSearched.current = true;
+          }
+        } else {
+          setSearchResults([]);
+        }
       } catch (error) {
-        console.error('Search error:', error);
-        setSearchResults([]);
+        if (error.name !== 'AbortError') {
+          console.error('Search error:', error);
+          setSearchResults([]);
+        }
       } finally {
         setIsSearching(false);
       }
     };
 
     performSearch();
-  }, [debouncedQuery]);
+
+    return () => {
+      if (searchRequestRef.current) {
+        searchRequestRef.current.abort();
+      }
+    };
+  }, [debouncedQuery, addRecentSearch]);
+
+  useEffect(() => {
+    hasSearched.current = false;
+  }, [searchQuery]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      setSearchQuery(query);
+    }
+  };
 
   const handleCloseSearch = () => {
     setSearchQuery('');
@@ -51,75 +91,148 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 space-y-8">
       <AnimatePresence mode="wait">
         {!showSearch ? (
-          <motion.button
+          <motion.div
             key="search-button"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setShowSearch(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 
-                      hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
           >
-            <Search className="w-5 h-5 text-black/70 dark:text-white/70" />
-            <span className="text-sm text-black/70 dark:text-white/70">Search Cosmetics</span>
-          </motion.button>
+            <button
+              onClick={() => setShowSearch(true)}
+              className="group relative w-full sm:w-auto overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/5 via-blue-400/5 to-blue-300/5 
+                        hover:from-blue-500/10 hover:via-blue-400/10 hover:to-blue-300/10 
+                        border border-blue-500/10 transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 
+                            translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+              <div className="relative px-6 py-4 flex items-center justify-between w-full sm:w-auto gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-400/10">
+                    <Search className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium text-blue-500/70 dark:text-blue-400/70">
+                      Search Cosmetics
+                    </span>
+                    <span className="text-xs text-black/40 dark:text-white/40">
+                      Find and add items to your wishlist
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 sm:hidden">
+                  <div className="h-8 w-[1px] bg-blue-500/10" />
+                  <ChevronRight className="w-4 h-4 text-blue-500/40" />
+                </div>
+              </div>
+            </button>
+
+            {wishlist && wishlist.length > 0 && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5">
+                <Heart className="w-5 h-5 text-pink-500/70" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-black/70 dark:text-white/70">
+                    {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'}
+                  </span>
+                  <span className="text-xs text-black/40 dark:text-white/40">
+                    in your wishlist
+                  </span>
+                </div>
+              </div>
+            )}
+          </motion.div>
         ) : (
           <motion.div
             key="search-section"
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0.1 }}
-            className="fixed inset-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
           >
-            <div className="h-full flex flex-col">
-              <div className="flex-none px-4 pt-6 pb-4 border-b border-black/5 dark:border-white/5 bg-white/50 dark:bg-black/50 backdrop-blur-lg">
-                <div className="max-w-3xl mx-auto space-y-4">
-                  {/* Search Header */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-white dark:from-black dark:via-blue-950/30 dark:to-black backdrop-blur-xl" />
+            
+            <div className="relative h-full flex flex-col">
+              <div className="flex-none border-b border-black/5 dark:border-white/5">
+                <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-black/90 dark:text-white/90">
-                      Search Cosmetics
-                    </h2>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-400/10">
+                        <Search className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                      </div>
+                      <h2 className="text-xl font-semibold bg-gradient-to-br from-black to-black/70 dark:from-white dark:to-white/70 bg-clip-text text-transparent">
+                        Search Cosmetics
+                      </h2>
+                    </div>
                     <button
                       onClick={handleCloseSearch}
-                      className="p-2 rounded-full bg-black/5 dark:bg-white/5 
-                               hover:bg-black/10 dark:hover:bg-white/10 
-                               text-black/70 dark:text-white/70 
-                               transition-colors"
+                      className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 
+                               text-black/70 dark:text-white/70 transition-colors"
                     >
                       <X className="w-6 h-6" />
                     </button>
                   </div>
 
-                  {/* Search Input */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search all Fortnite cosmetics..."
-                      autoFocus
-                      className="w-full px-4 py-4 pl-12 rounded-2xl 
-                               bg-black/5 dark:bg-white/5 
-                               border border-black/5 dark:border-white/5 
-                               text-lg text-black/90 dark:text-white/90 
-                               placeholder-black/50 dark:placeholder-white/50 
-                               focus:outline-none focus:bg-black/10 dark:focus:bg-white/10
-                               transition-colors"
-                    />
-                    {isSearching ? (
-                      <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 
-                                        text-black/50 dark:text-white/50 animate-spin" />
-                    ) : (
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 
-                                       text-black/50 dark:text-white/50" />
+                  <div className="relative space-y-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-500/20 via-blue-400/20 to-blue-300/20 rounded-2xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleInputChange}
+                        placeholder="Search by name..."
+                        autoFocus
+                        className="w-full px-6 py-4 pl-14 rounded-2xl 
+                                 bg-white/60 dark:bg-black/60
+                                 border border-black/5 dark:border-white/5
+                                 text-lg text-black/90 dark:text-white/90 
+                                 placeholder-black/40 dark:placeholder-white/40 
+                                 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
+                                 transition-all duration-200"
+                      />
+                      {isSearching ? (
+                        <Loader2 className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 
+                                          text-blue-500/70 dark:text-blue-400/70 animate-spin" />
+                      ) : (
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 
+                                         text-blue-500/70 dark:text-blue-400/70" />
+                      )}
+                    </div>
+
+                    {!searchQuery && recentSearches.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-black/50 dark:text-white/50">
+                            Recent Searches
+                          </span>
+                          <button
+                            onClick={clearRecentSearches}
+                            className="text-xs text-blue-500/70 hover:text-blue-500 dark:text-blue-400/70 dark:hover:text-blue-400 transition-colors"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {recentSearches.map((query) => (
+                            <button
+                              key={query}
+                              onClick={() => handleSearch(query)}
+                              className="px-3 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 
+                                       hover:bg-black/10 dark:hover:bg-white/10
+                                       text-sm text-black/70 dark:text-white/70
+                                       transition-colors flex items-center gap-2"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              {query}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Scrollable Results */}
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                 <div className="max-w-3xl mx-auto px-4 py-6">
                   {searchQuery.length >= 2 && (
