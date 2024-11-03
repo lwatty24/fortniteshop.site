@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useDebounce } from 'use-debounce';
 import { Search, Loader2, X, Heart, ChevronRight, Clock } from 'lucide-react';
 import { searchCosmetics } from '../api/fortnite';
@@ -7,83 +7,39 @@ import { ItemCard } from './ItemCard';
 import type { ShopItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRecentSearches } from '../hooks/useRecentSearches';
+import { useSearch } from '../hooks/useSearch';
 
 interface WishlistTabProps {
   onItemClick: (item: ShopItem) => void;
 }
 
 export function WishlistTab({ onItemClick }: WishlistTabProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounce(searchQuery, 200);
-  const [searchResults, setSearchResults] = useState<ShopItem[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const { 
+    query, 
+    setQuery, 
+    results: searchResults, 
+    isSearching, 
+    performSearch 
+  } = useSearch();
   const [showSearch, setShowSearch] = useState(false);
   const { wishlist, handleWishlist } = useWishlist();
   const { recentSearches, addRecentSearch, clearRecentSearches } = useRecentSearches();
-  const searchRequestRef = useRef<AbortController | null>(null);
-  const hasSearched = useRef(false);
 
   useEffect(() => {
-    const performSearch = async () => {
-      if (!debouncedQuery || debouncedQuery.length < 2) {
-        setSearchResults([]);
-        return;
+    performSearch(query);
+  }, [query, performSearch]);
+
+  const handleSearch = useCallback((searchQuery: string) => {
+    if (searchQuery.trim()) {
+      setQuery(searchQuery);
+      if (searchQuery.length >= 2) {
+        addRecentSearch(searchQuery);
       }
-
-      if (searchRequestRef.current) {
-        searchRequestRef.current.abort();
-      }
-
-      searchRequestRef.current = new AbortController();
-      setIsSearching(true);
-
-      try {
-        const results = await searchCosmetics(debouncedQuery);
-        if (results && results.length > 0) {
-          setSearchResults(results);
-          if (!hasSearched.current) {
-            addRecentSearch(debouncedQuery);
-            hasSearched.current = true;
-          }
-        } else {
-          setSearchResults([]);
-        }
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Search error:', error);
-          setSearchResults([]);
-        }
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    performSearch();
-
-    return () => {
-      if (searchRequestRef.current) {
-        searchRequestRef.current.abort();
-      }
-    };
-  }, [debouncedQuery, addRecentSearch]);
-
-  useEffect(() => {
-    hasSearched.current = false;
-  }, [searchQuery]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleSearch = (query: string) => {
-    if (query.trim()) {
-      setSearchQuery(query);
     }
-  };
+  }, [setQuery, addRecentSearch]);
 
   const handleCloseSearch = () => {
-    setSearchQuery('');
-    setSearchResults([]);
+    setQuery('');
     setShowSearch(false);
   };
 
@@ -93,10 +49,10 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
         {!showSearch ? (
           <motion.div
             key="search-button"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
+            variants={slideUp}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
           >
             <button
@@ -178,8 +134,8 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
                       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-500/20 via-blue-400/20 to-blue-300/20 rounded-2xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity" />
                       <input
                         type="text"
-                        value={searchQuery}
-                        onChange={handleInputChange}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search by name..."
                         autoFocus
                         className="w-full px-6 py-4 pl-14 rounded-2xl 
@@ -199,7 +155,7 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
                       )}
                     </div>
 
-                    {!searchQuery && recentSearches.length > 0 && (
+                    {!query && recentSearches.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-black/50 dark:text-white/50">
@@ -235,10 +191,12 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
 
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                 <div className="max-w-3xl mx-auto px-4 py-6">
-                  {searchQuery.length >= 2 && (
+                  {query.length >= 2 && (
                     <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      variants={fadeIn}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
                     >
                       {isSearching ? (
                         <div className="flex flex-col items-center justify-center py-12">
@@ -254,15 +212,18 @@ export function WishlistTab({ onItemClick }: WishlistTabProps) {
                           </div>
                           <motion.div 
                             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+                            variants={scaleIn}
                             layout
                           >
                             {searchResults.map(item => (
                               <motion.div
                                 key={item.id}
                                 layout
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.2 }}
+                                variants={scaleIn}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                layoutId={item.id}
                               >
                                 <ItemCard
                                   key={item.id}

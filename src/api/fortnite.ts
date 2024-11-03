@@ -145,6 +145,7 @@ function processShopData(data: any) {
 const searchCache = new Map<string, {
   results: any[];
   timestamp: number;
+  promise?: Promise<any[]>;
 }>();
 
 const CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
@@ -155,54 +156,76 @@ export async function searchCosmetics(query: string) {
   const now = Date.now();
   const cached = searchCache.get(cacheKey);
 
-  if (cached && now - cached.timestamp < CACHE_DURATION) {
-    return cached.results;
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-    const response = await fetch(
-      `https://fortnite-api.com/v2/cosmetics/br/search/all?name=${encodeURIComponent(query)}&matchMethod=contains&language=en`,
-      { signal: controller.signal }
-    );
-    
-    clearTimeout(timeoutId);
-    const data = await response.json();
-
-    if (!data.data) return [];
-
-    const items = Array.isArray(data.data) ? data.data : [data.data];
-    
-    const results = items
-      .filter(item => item.name.toLowerCase().includes(cacheKey))
-      .slice(0, MAX_RESULTS)
-      .map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        rarity: item.rarity.value,
-        type: item.type.value,
-        image: item.images.icon,
-        featuredImage: item.images.featured || item.images.icon,
-        added: item.added,
-        price: null,
-        series: item.series?.value || null,
-        isFromSearch: true
-      }));
-
-    searchCache.set(cacheKey, { results, timestamp: now });
-    return results;
-
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.log('Search request timed out');
-    } else {
-      console.error('Search error:', error);
+  // Return cached results if valid
+  if (cached) {
+    if (now - cached.timestamp < CACHE_DURATION) {
+      return cached.results;
     }
-    return [];
+    // Return pending promise if exists
+    if (cached.promise) {
+      return cached.promise;
+    }
   }
+
+  // Create new promise for this search
+  const promise = (async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      const response = await fetch(
+        `https://fortnite-api.com/v2/cosmetics/br/search/all?name=${encodeURIComponent(query)}&matchMethod=contains&language=en`,
+        { 
+          signal: controller.signal,
+          headers: {
+            'Accept-Encoding': 'gzip',
+            'Cache-Control': 'max-age=3600'
+          }
+        }
+      );
+      
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!data.data) return [];
+
+      const results = processSearchResults(data.data);
+      searchCache.set(cacheKey, { results, timestamp: now });
+      return results;
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Search error:', error);
+      }
+      return [];
+    }
+  })();
+
+  // Cache the promise
+  searchCache.set(cacheKey, { 
+    results: [], 
+    timestamp: now, 
+    promise 
+  });
+
+  return promise;
+}
+
+// Separate processing function for better performance
+function processSearchResults(data: any) {
+  const items = Array.isArray(data) ? data : [data];
+  return items
+    .slice(0, MAX_RESULTS)
+    .map(item => ({
+      id: item.id,
+      name: item.name,
+      rarity: item.rarity.value,
+      type: item.type.value,
+      image: item.images.icon,
+      featuredImage: item.images.featured || item.images.icon,
+      added: item.added,
+      lastSeen: item.shopHistory?.[item.shopHistory.length - 1] || item.added,
+      isFromSearch: true
+    }));
 }
 
 export async function fetchShopHistory(date: string) {

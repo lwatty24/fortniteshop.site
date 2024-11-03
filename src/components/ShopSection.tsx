@@ -3,6 +3,7 @@ import { ShopSection as ShopSectionType } from '../types';
 import { ItemCard } from './ItemCard';
 import { JamTrackCard } from './JamTrackCard';
 import { useWishlist } from '../contexts/WishlistContext';
+import { spring } from '../constants/animations';
 
 interface ShopSectionProps {
   section: ShopSectionType;
@@ -12,54 +13,28 @@ interface ShopSectionProps {
   compareItems?: ShopItem[];
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1
-    }
-  },
-  loading: {
-    opacity: 0.5,
-    transition: {
-      duration: 0.3
-    }
-  }
-};
-
-const item = {
-  hidden: { 
+export const sectionAnimation = {
+  initial: { 
     opacity: 0,
-    rotateX: -15,
-    translateY: 50
-  },
-  show: { 
-    opacity: 1,
-    rotateX: 0,
-    translateY: 0,
+    y: 20,
     transition: {
       type: "spring",
-      stiffness: 300,
-      damping: 25
+      ...spring
     }
   },
-  loading: {
-    opacity: 0.5,
-    scale: 0.98,
+  animate: {
+    opacity: 1,
+    y: 0,
     transition: {
-      duration: 0.3
+      type: "spring",
+      ...spring,
+      staggerChildren: 0.05
     }
   },
   exit: {
     opacity: 0,
-    rotateX: 15,
-    translateY: -50,
-    transition: {
-      duration: 0.3,
-      ease: "easeInOut"
-    }
+    y: 20,
+    transition: { duration: 0.2 }
   }
 };
 
@@ -68,9 +43,9 @@ export function ShopSection({ section, onItemClick, onCompare, isRefreshing, com
 
   return (
     <motion.div
-      variants={container}
-      initial="hidden"
-      animate={isRefreshing ? "loading" : "show"}
+      variants={sectionAnimation}
+      initial="initial"
+      animate={isRefreshing ? "loading" : "animate"}
       className="max-w-[1800px] mx-auto px-6"
     >
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">

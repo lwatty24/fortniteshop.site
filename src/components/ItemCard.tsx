@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
+import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { ShopItem } from '../types';
 import { Skull, Scale, Heart } from 'lucide-react';
 import { rarityColors } from '../constants/rarity';
@@ -21,19 +21,19 @@ interface ItemCardProps {
   isTouchDevice?: boolean;
 }
 
-const floatingAnimation = {
+const floatingAnimation: Variants = {
   initial: { y: 0 },
   animate: {
     y: [-2, 2, -2],
     transition: {
-      duration: 3,
+      duration: 2.5,
       repeat: Infinity,
-      ease: "linear"
+      ease: [0.45, 0, 0.55, 1]
     }
   }
 };
 
-export const ItemCard = React.memo(function ItemCard({ 
+export const ItemCard = memo(function ItemCard({ 
   item: shopItem, 
   onClick, 
   onCompare, 
@@ -201,5 +201,11 @@ export const ItemCard = React.memo(function ItemCard({
         )}
       </AnimatePresence>
     </motion.div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.isWishlisted === nextProps.isWishlisted &&
+    prevProps.showWishlistButton === nextProps.showWishlistButton
   );
 });
