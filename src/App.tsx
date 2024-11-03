@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShopSection as ShopSectionComponent } from './components/ShopSection';
 import { ErrorState } from './components/ErrorState';
@@ -61,7 +61,7 @@ function App() {
 
   useWishlistNotifications(shopData.flatMap(section => section.items));
 
-  const tabs = [
+  const tabs = useMemo(() => [
     'Sets', 
     'History', 
     ...new Set(
@@ -70,7 +70,7 @@ function App() {
         .map(section => section.name)
     ),
     'Bundle',
-  ];
+  ], [shopData]);
   const activeSection = shopData.find(section => section.name === activeTab);
 
   console.log('Available sections:', shopData.map(s => s.name));

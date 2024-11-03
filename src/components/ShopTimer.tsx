@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 
 export function ShopTimer() {
   const [timeLeft, setTimeLeft] = useState('');
+  const timerRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -18,9 +19,13 @@ export function ShopTimer() {
     };
 
     setTimeLeft(calculateTimeLeft());
-    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000);
+    timerRef.current = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000);
     
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, []);
 
   return (

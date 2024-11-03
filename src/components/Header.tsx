@@ -30,9 +30,9 @@ export function Header({ isLoading, onRefresh }: HeaderProps) {
           <button 
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RotateCcw className={`w-5 h-5 text-white/70 ${isLoading ? 'animate-spin' : ''}`} />
+            <RotateCcw className={`w-5 h-5 text-black/70 dark:text-white/70 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>

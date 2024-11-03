@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format, subDays, addDays, isFuture, isAfter, startOfDay } from 'date-fns';
 import { 
   ChevronLeft, 
@@ -36,7 +36,7 @@ export function ShopHistory() {
     }
   };
 
-  const sectionIcons: { [key: string]: React.ReactNode } = {
+  const sectionIcons = useMemo(() => ({
     'Outfit': <User className="w-5 h-5 text-black/50 dark:text-white/50" />,
     'Bundle': <Package className="w-5 h-5 text-black/50 dark:text-white/50" />,
     'Emote': <Music className="w-5 h-5 text-black/50 dark:text-white/50" />,
@@ -46,7 +46,7 @@ export function ShopHistory() {
     'Music': <Music2 className="w-5 h-5 text-black/50 dark:text-white/50" />,
     'Loading': <Image className="w-5 h-5 text-black/50 dark:text-white/50" />,
     'Contrail': <Sparkles className="w-5 h-5 text-black/50 dark:text-white/50" />
-  };
+  }), []);
 
   return (
     <div className="max-w-[1800px] mx-auto px-4 py-6">

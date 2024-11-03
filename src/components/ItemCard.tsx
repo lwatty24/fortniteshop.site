@@ -1,8 +1,8 @@
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ShopItem } from '../types';
 import { Skull, Scale, Heart } from 'lucide-react';
 import { rarityColors } from '../constants/rarity';
-import { useRef, useState, useEffect } from 'react';
 import { RarityPulse } from './RarityPulse';
 import { AnimatePresence } from 'framer-motion';
 import { QuickPreview } from './QuickPreview';
@@ -32,7 +32,16 @@ const floatingAnimation = {
   }
 };
 
-export function ItemCard({ item: shopItem, onClick, onCompare, onWishlist, isRefreshing, isSelected, isWishlisted, showWishlistButton = true }: ItemCardProps) {
+export const ItemCard = React.memo(function ItemCard({ 
+  item: shopItem, 
+  onClick, 
+  onCompare, 
+  onWishlist, 
+  isRefreshing, 
+  isSelected, 
+  isWishlisted, 
+  showWishlistButton = true 
+}: ItemCardProps) {
   const rarity = rarityColors[(shopItem.rarity || 'common').toLowerCase() as keyof typeof rarityColors] || rarityColors.common;
   const [showPreview, setShowPreview] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -72,6 +81,11 @@ export function ItemCard({ item: shopItem, onClick, onCompare, onWishlist, isRef
 
   const imageY = useTransform(scrollY, [0, 1], ["0%", "-10%"]);
 
+  const handleCompareClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCompare?.();
+  }, [onCompare]);
+
   return (
     <motion.div
       variants={floatingAnimation}
@@ -108,10 +122,7 @@ export function ItemCard({ item: shopItem, onClick, onCompare, onWishlist, isRef
               
               {onCompare && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCompare();
-                  }}
+                  onClick={handleCompareClick}
                   className={`p-2 rounded-lg transition-all duration-200
                     ${isSelected 
                       ? 'bg-blue-500/20 text-blue-400'
@@ -180,4 +191,4 @@ export function ItemCard({ item: shopItem, onClick, onCompare, onWishlist, isRef
       </AnimatePresence>
     </motion.div>
   );
-}
+});
