@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShopSection as ShopSectionComponent } from './components/ShopSection';
 import { ErrorState } from './components/ErrorState';
@@ -25,6 +25,13 @@ import { useShopHistory } from './hooks/useShopHistory';
 import { ShopTimer } from './components/ShopTimer';
 import { QuickActions } from './components/QuickActions';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { LoadingSkeleton } from './components/LoadingSkeleton';
+import { performanceMonitor } from './services/performance';
+import * as LazyComponents from './components/LazyComponents';
+import { analytics } from './services/analytics';
+import { errorTracker } from './services/errorTracking';
+
 
 function App() {
   const [shopData, setShopData] = useState<ShopSection[]>([]);
@@ -41,17 +48,35 @@ function App() {
 
   const loadShopData = async () => {
     try {
+      analytics.track('shop_data_load_started');
       setIsLoading(true);
       setIsRefreshing(true);
       setError(null);
-      const data = await fetchShopData();
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const data = await performanceMonitor.measureAsync('shop_data_load', 
+        fetchShopData(controller.signal)
+      );
+      clearTimeout(timeoutId);
+      
       setShopData(data);
-      
       addToHistory(data);
+      setActiveTab(data[0]?.name || 'Featured');
       
-      setActiveTab(data.find(section => section.name === 'Outfit') ? 'Outfit' : data[0]?.name || '');
-    } catch (err) {
-      setError('Unable to load shop data. Please try again later.');
+      analytics.track('shop_data_load_success', {
+        sections: data.length,
+        items: data.reduce((acc, section) => acc + section.items.length, 0)
+      });
+    } catch (err: any) {
+      const error = err instanceof Error ? err : new Error(err.message);
+      errorTracker.trackError(error, { 
+        component: 'App',
+        action: 'loadShopData' 
+      });
+      setError(error.message || 'An unexpected error occurred');
+      analytics.track('shop_data_load_error', { error: error.message });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -99,22 +124,30 @@ function App() {
   };
 
   const content = activeTab === 'Wishlist' ? (
-    <WishlistTab onItemClick={setSelectedItem} />
+    <Suspense fallback={<LoadingSkeleton />}>
+      <LazyComponents.WishlistTab onItemClick={setSelectedItem} />
+    </Suspense>
   ) : activeTab === 'Sets' ? (
-    <SetCollections 
-      items={shopData.flatMap(section => section.items)}
-      onItemClick={setSelectedItem}
-    />
+    <Suspense fallback={<LoadingSkeleton />}>
+      <LazyComponents.SetCollections 
+        items={shopData.flatMap(section => section.items)}
+        onItemClick={setSelectedItem}
+      />
+    </Suspense>
   ) : activeTab === 'History' ? (
-    <ShopHistory />
+    <Suspense fallback={<LoadingSkeleton />}>
+      <LazyComponents.ShopHistory />
+    </Suspense>
   ) : filteredSection ? (
-    <ShopSectionComponent
-      section={filteredSection}
-      onItemClick={setSelectedItem}
-      onCompare={handleCompare}
-      isRefreshing={isRefreshing}
-      compareItems={compareItems}
-    />
+    <Suspense fallback={<LoadingSkeleton />}>
+      <LazyComponents.ShopSectionComponent
+        section={filteredSection}
+        onItemClick={setSelectedItem}
+        onCompare={handleCompare}
+        isRefreshing={isRefreshing}
+        compareItems={compareItems}
+      />
+    </Suspense>
   ) : null;
 
   useKeyboardShortcuts({
@@ -231,17 +264,21 @@ function App() {
 
       <AnimatePresence>
         {selectedItem && (
-          <ItemDetails
-            item={selectedItem}
-            onClose={() => setSelectedItem(null)}
-          />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <LazyComponents.ItemDetails
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+            />
+          </Suspense>
         )}
 
         {compareItems.length === 2 && (
-          <CompareModal
-            items={[compareItems[0], compareItems[1]]}
-            onClose={() => setCompareItems([])}
-          />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <LazyComponents.CompareModal
+              items={[compareItems[0], compareItems[1]]}
+              onClose={() => setCompareItems([])}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 
@@ -261,12 +298,14 @@ function App() {
 
 export default function AppWithProviders() {
   return (
-    <NotificationProvider>
-      <ThemeProvider>
-        <WishlistProvider>
-          <App />
-        </WishlistProvider>
-      </ThemeProvider>
-    </NotificationProvider>
+    <ErrorBoundary>
+      <NotificationProvider>
+        <ThemeProvider>
+          <WishlistProvider>
+            <App />
+          </WishlistProvider>
+        </ThemeProvider>
+      </NotificationProvider>
+    </ErrorBoundary>
   );
 }

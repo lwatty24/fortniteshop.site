@@ -1,50 +1,19 @@
-export async function fetchShopData() {
-  try {
-    const response = await fetch('https://fortnite-api.com/v2/shop/br');
-    const data = await response.json();
+export async function fetchShopData(signal?: AbortSignal) {
+  const response = await fetch('https://fortnite-api.com/v2/shop/br', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    signal,
+    mode: 'cors'  // Explicitly set CORS mode
+  });
 
-    // Debug log to check API response
-    console.log('API Response:', JSON.stringify(data.data.featured?.entries?.[0]?.items?.[0], null, 2));
-    
-    // Check for music packs
-    const allItems = [
-      ...(data.data.featured?.entries || []),
-      ...(data.data.daily?.entries || []),
-      ...(data.data.specialFeatured?.entries || [])
-    ];
-    
-    console.log('All Items Types:', allItems.map(entry => ({
-      name: entry.items[0].name,
-      type: entry.items[0].type,
-      displayValue: entry.items[0].type.displayValue,
-      value: entry.items[0].type.value,
-      rawType: JSON.stringify(entry.items[0].type)
-    })));
-    
-    const musicPacks = allItems.filter(entry => {
-      const type = entry.items[0].type;
-      const typeValue = type?.value?.toLowerCase() || '';
-      const displayValue = type?.displayValue?.toLowerCase() || '';
-      
-      console.log('Checking item:', {
-        name: entry.items[0].name,
-        typeValue,
-        displayValue,
-        matches: typeValue.includes('music') || displayValue.includes('music')
-      });
-      
-      return typeValue.includes('music') || displayValue.includes('music');
-    });
-    
-    console.log('Found Music Packs:', musicPacks.length, musicPacks);
-
-    if (!data.data) throw new Error('Invalid data format');
-
-    return processShopData(data.data);
-  } catch (error) {
-    console.error('Error fetching shop data:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error('Failed to fetch shop data');
   }
+
+  const data = await response.json();
+  return processShopData(data.data);
 }
 
 function processShopData(data: any) {
@@ -230,10 +199,15 @@ function processSearchResults(data: any) {
 
 export async function fetchShopHistory(date: string) {
   try {
-    // Use the historical endpoint with the date parameter
-    const response = await fetch(`https://fortnite-api.com/v2/shop/br/${date}`);
-    const data = await response.json();
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/shop/br/${date}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      mode: 'cors'
+    });
     
+    const data = await response.json();
     if (!data.data) throw new Error('Invalid data format');
     
     return {

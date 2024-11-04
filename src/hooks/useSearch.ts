@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useDebounce } from 'use-debounce';
 import { searchCosmetics } from '../api/fortnite';
 import type { ShopItem } from '../types';
+import { sanitizeInput } from '../utils/security';
 
 export function useSearch() {
   const [query, setQuery] = useState('');
@@ -25,7 +26,8 @@ export function useSearch() {
     setIsSearching(true);
 
     try {
-      const searchResults = await searchCosmetics(searchQuery);
+      const sanitizedQuery = sanitizeInput(searchQuery);
+      const searchResults = await searchCosmetics(sanitizedQuery);
       setResults(searchResults);
       hasSearched.current = true;
     } catch (error) {

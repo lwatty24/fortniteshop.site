@@ -5,6 +5,36 @@ import { JamTrackCard } from './JamTrackCard';
 import { useWishlist } from '../contexts/WishlistContext';
 import { spring } from '../constants/animations';
 
+const sectionAnimation = {
+  initial: { 
+    opacity: 0,
+    y: 20
+  },
+  animate: { 
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+      staggerChildren: 0.05
+    }
+  },
+  loading: {
+    opacity: 0.5,
+    transition: {
+      duration: 0.2
+    }
+  },
+  exit: { 
+    opacity: 0,
+    y: 20,
+    transition: { 
+      duration: 0.2 
+    }
+  }
+};
+
 interface ShopSectionProps {
   section: ShopSectionType;
   onItemClick?: (item: ShopItem) => void;
@@ -13,32 +43,7 @@ interface ShopSectionProps {
   compareItems?: ShopItem[];
 }
 
-export const sectionAnimation = {
-  initial: { 
-    opacity: 0,
-    y: 20,
-    transition: {
-      type: "spring",
-      ...spring
-    }
-  },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      ...spring,
-      staggerChildren: 0.05
-    }
-  },
-  exit: {
-    opacity: 0,
-    y: 20,
-    transition: { duration: 0.2 }
-  }
-};
-
-export function ShopSection({ section, onItemClick, onCompare, isRefreshing, compareItems }: ShopSectionProps) {
+export const ShopSection = ({ section, onItemClick, onCompare, isRefreshing, compareItems }: ShopSectionProps) => {
   const { handleWishlist, isItemWishlisted } = useWishlist();
 
   return (
@@ -83,4 +88,4 @@ export function ShopSection({ section, onItemClick, onCompare, isRefreshing, com
       </div>
     </motion.div>
   );
-}
+};
