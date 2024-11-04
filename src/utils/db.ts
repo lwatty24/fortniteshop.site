@@ -11,7 +11,7 @@ const DB_NAME = 'fortnite-shop-db';
 const STORE_NAME = 'shop-history';
 const DB_VERSION = 1;
 
-export const db = await openDB<{
+let dbPromise = openDB<{
   'shop-history': {
     key: string;
     value: HistoryEntry;
@@ -23,13 +23,16 @@ export const db = await openDB<{
 });
 
 export async function getAllHistory(): Promise<HistoryEntry[]> {
+  const db = await dbPromise;
   return await db.getAll(STORE_NAME);
 }
 
 export async function addHistoryEntry(entry: HistoryEntry): Promise<void> {
+  const db = await dbPromise;
   await db.put(STORE_NAME, entry);
 }
 
 export async function getHistoryEntry(date: string): Promise<HistoryEntry | undefined> {
+  const db = await dbPromise;
   return await db.get(STORE_NAME, date);
 } 
