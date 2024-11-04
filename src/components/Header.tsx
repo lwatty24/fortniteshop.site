@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { RotateCcw, Calendar } from 'lucide-react';
+import { RotateCcw, Calendar, Store } from 'lucide-react';
 import { ShopTimer } from './ShopTimer';
 
 interface HeaderProps {
@@ -13,9 +13,25 @@ export function Header({ isLoading, onRefresh }: HeaderProps) {
       <div className="max-w-[1800px] mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-black dark:from-white to-black/80 dark:to-white/80 bg-clip-text text-transparent">
-              ITEM STORE
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-[1.7rem] font-extrabold tracking-tight flex items-baseline gap-3">
+                <span className="relative">
+                  <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                    Fortnite Shop
+                  </span>
+                  <div className="absolute -bottom-px left-0 right-0 h-[1px] bg-gradient-to-r from-violet-600/40 via-blue-600/40 to-cyan-500/40" />
+                </span>
+                <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-600/10 via-blue-600/10 to-cyan-500/10 text-violet-600/70 dark:text-violet-400/70">
+                  BETA
+                </span>
+              </h1>
+              <div className="flex items-center gap-3 mt-1">
+                <Store className="w-3.5 h-3.5 text-black/40 dark:text-white/40" />
+                <span className="text-xs font-medium text-black/40 dark:text-white/40">
+                  Track daily item shop rotations and history
+                </span>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
                 <Calendar className="w-4 h-4 text-black/70 dark:text-white/70" />

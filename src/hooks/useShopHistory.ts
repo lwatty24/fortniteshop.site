@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShopSection } from '../types';
-import { format, isAfter, startOfDay, isSameDay } from 'date-fns';
+import { format, isAfter } from 'date-fns';
+import { db, getAllHistory, addHistoryEntry } from '../utils/db';
 
 interface HistoryEntry {
   date: string;
@@ -9,37 +10,43 @@ interface HistoryEntry {
 }
 
 export function useShopHistory() {
-  const [history, setHistory] = useState<HistoryEntry[]>(() => {
-    const saved = localStorage.getItem('shop-history');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('shop-history', JSON.stringify(history));
-  }, [history]);
+    const loadHistory = async () => {
+      try {
+        const data = await getAllHistory();
+        setHistory(data.sort((a, b) => 
+          isAfter(new Date(a.date), new Date(b.date)) ? -1 : 1
+        ));
+      } catch (error) {
+        console.error('Error loading history:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadHistory();
+  }, []);
 
-  const addToHistory = (sections: ShopSection[]) => {
+  const addToHistory = async (sections: ShopSection[]) => {
     const now = new Date();
     const today = format(now, 'yyyy-MM-dd');
     const timestamp = now.toISOString();
     
-    setHistory(prev => {
-      const existingTodayEntry = prev.find(entry => entry.date === today);
-      
-      if (existingTodayEntry) {
-        const hasShopChanged = JSON.stringify(existingTodayEntry.sections) !== JSON.stringify(sections);
-        if (!hasShopChanged) return prev;
-      }
-
-      const sortedHistory = prev
-        .filter(entry => entry.date !== today)
-        .sort((a, b) => isAfter(new Date(a.date), new Date(b.date)) ? -1 : 1);
-
-      return [
-        { date: today, sections, lastUpdated: timestamp },
-        ...sortedHistory
-      ].slice(0, 30);
-    });
+    const entry = { date: today, sections, lastUpdated: timestamp };
+    
+    try {
+      await addHistoryEntry(entry);
+      setHistory(prev => {
+        const filtered = prev.filter(e => e.date !== today);
+        return [entry, ...filtered].sort((a, b) => 
+          isAfter(new Date(a.date), new Date(b.date)) ? -1 : 1
+        );
+      });
+    } catch (error) {
+      console.error('Error adding to history:', error);
+    }
   };
 
   const getShopForDate = (date: string) => {
@@ -50,5 +57,11 @@ export function useShopHistory() {
     return history.map(entry => entry.date).sort();
   };
 
-  return { history, addToHistory, getShopForDate, getAvailableDates };
+  return { 
+    history, 
+    addToHistory, 
+    getShopForDate, 
+    getAvailableDates,
+    isLoading 
+  };
 } 

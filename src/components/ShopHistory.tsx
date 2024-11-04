@@ -22,7 +22,7 @@ import { useShopHistory } from '../hooks/useShopHistory';
 export function ShopHistory() {
   const today = startOfDay(new Date());
   const [selectedDate, setSelectedDate] = useState(today);
-  const { getShopForDate, getAvailableDates } = useShopHistory();
+  const { getShopForDate, getAvailableDates, isLoading } = useShopHistory();
   const availableDates = getAvailableDates();
   
   const historyData = getShopForDate(format(selectedDate, 'yyyy-MM-dd'));
@@ -89,7 +89,11 @@ export function ShopHistory() {
         </div>
       </div>
 
-      {!historyData?.sections ? (
+      {isLoading ? (
+        <div className="text-center py-12 text-black/50 dark:text-white/50">
+          Loading history...
+        </div>
+      ) : !historyData?.sections ? (
         <div className="text-center py-12 text-black/50 dark:text-white/50">
           No shop data available for this date
         </div>

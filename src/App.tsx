@@ -143,9 +143,15 @@ function App() {
         <div className="max-w-[1800px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-black dark:from-white to-black/80 dark:to-white/80 bg-clip-text text-transparent">
-                ITEM STORE
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  <span className="text-black/90 dark:text-white/90">Fortnite</span>
+                  <span className="text-blue-500">Shop</span>
+                </h1>
+                <span className="text-[0.65rem] font-medium text-black/40 dark:text-white/40 tracking-widest uppercase">
+                  Item Shop Tracker
+                </span>
+              </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
                   <Calendar className="w-4 h-4 text-black/70 dark:text-white/70" />
