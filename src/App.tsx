@@ -31,6 +31,8 @@ import { performanceMonitor } from './services/performance';
 import * as LazyComponents from './components/LazyComponents';
 import { analytics } from './services/analytics';
 import { errorTracker } from './services/errorTracking';
+import { Header } from './components/Header';
+import { useSearch } from './hooks/useSearch';
 
 
 function App() {
@@ -45,6 +47,7 @@ function App() {
   const [compareItems, setCompareItems] = useState<ShopItem[]>([]);
   const { addToHistory } = useShopHistory();
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const { query, setQuery, isSearching, results } = useSearch();
 
   const loadShopData = async () => {
     try {
@@ -103,13 +106,17 @@ function App() {
 
   console.log('Available sections:', shopData.map(s => s.name));
 
-  const filteredSection = activeSection ? {
-    ...activeSection,
-    items: activeSection.items.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  } : null;
+  const filteredShopData = useMemo(() => {
+    if (!query) return shopData;
+    
+    return shopData.map(section => ({
+      ...section,
+      items: section.items.filter(item => 
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        item.description.toLowerCase().includes(query.toLowerCase())
+      )
+    })).filter(section => section.items.length > 0);
+  }, [shopData, query]);
 
   const handleCompare = (item: ShopItem) => {
     setCompareItems(prev => {
@@ -138,10 +145,10 @@ function App() {
     <Suspense fallback={<LoadingSkeleton />}>
       <LazyComponents.ShopHistory />
     </Suspense>
-  ) : filteredSection ? (
+  ) : filteredShopData.find(s => s.name === activeTab) ? (
     <Suspense fallback={<LoadingSkeleton />}>
       <LazyComponents.ShopSectionComponent
-        section={filteredSection}
+        section={filteredShopData.find(s => s.name === activeTab)}
         onItemClick={setSelectedItem}
         onCompare={handleCompare}
         isRefreshing={isRefreshing}
@@ -172,66 +179,16 @@ function App() {
         dismissible
         expand={false}
       />
-      <header className="sticky top-0 z-30 bg-gradient-to-b from-white/95 via-white/90 to-white/80 dark:from-black/95 dark:via-black/90 dark:to-black/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5">
-        <div className="max-w-[1800px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  <span className="text-black/90 dark:text-white/90">Fortnite</span>
-                  <span className="text-blue-500">Shop</span>
-                </h1>
-                <span className="text-[0.65rem] font-medium text-black/40 dark:text-white/40 tracking-widest uppercase">
-                  Item Shop Tracker
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-1.5">
-                  <Calendar className="w-4 h-4 text-black/70 dark:text-white/70" />
-                  <time className="text-sm font-medium text-black/70 dark:text-white/70">
-                    {format(new Date(), 'MMM d, yyyy')}
-                  </time>
-                </div>
-                <ShopTimer />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <NotificationSettings />
-              <button 
-                onClick={toggleTheme}
-                className="p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              >
-                {theme === 'dark' ? (
-                  <Sun className="w-5 h-5 text-white/70" />
-                ) : (
-                  <Moon className="w-5 h-5 text-black/70" />
-                )}
-              </button>
-              <div className="flex flex-col gap-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-black/90 dark:text-white/90 placeholder-black/50 dark:placeholder-white/50 focus:outline-none focus:border-black/20 dark:focus:border-white/20 transition-colors"
-                  />
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 dark:text-white/50" />
-                </div>
-              </div>
-              <button 
-                onClick={loadShopData}
-                disabled={isLoading}
-                className="p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
-              >
-                <RotateCcw className={`w-5 h-5 text-black/70 dark:text-white/70 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <Header 
+        isLoading={isLoading} 
+        onRefresh={loadShopData}
+        theme={theme}
+        onThemeToggle={toggleTheme}
+        query={query}
+        setQuery={setQuery}
+        isSearching={isSearching}
+      />
+      
       <main className="relative">
         {error ? (
           <ErrorState message={error} onRetry={loadShopData} />
