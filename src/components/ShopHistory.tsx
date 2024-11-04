@@ -29,7 +29,7 @@ export function ShopHistory() {
 
   const navigateDate = (days: number) => {
     const currentIndex = availableDates.indexOf(format(selectedDate, 'yyyy-MM-dd'));
-    const newIndex = currentIndex + (days > 0 ? -1 : 1); // Reverse direction for intuitive navigation
+    const newIndex = currentIndex + days;
     
     if (newIndex >= 0 && newIndex < availableDates.length) {
       setSelectedDate(new Date(availableDates[newIndex]));
@@ -62,7 +62,7 @@ export function ShopHistory() {
         
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigateDate(1)}
+            onClick={() => navigateDate(-1)}
             className="p-2 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 
                      dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={availableDates.indexOf(format(selectedDate, 'yyyy-MM-dd')) === 0}
@@ -79,7 +79,7 @@ export function ShopHistory() {
           </div>
           
           <button
-            onClick={() => navigateDate(-1)}
+            onClick={() => navigateDate(1)}
             className="p-2 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 
                      dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={availableDates.indexOf(format(selectedDate, 'yyyy-MM-dd')) === availableDates.length - 1}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShopSection } from '../types';
 import { format, isAfter } from 'date-fns';
-import { db, getAllHistory, addHistoryEntry } from '../utils/db';
+import { getAllHistory, addHistoryEntry } from '../utils/db';
 
 interface HistoryEntry {
   date: string;
