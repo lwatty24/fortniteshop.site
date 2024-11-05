@@ -33,6 +33,9 @@ import { analytics } from './services/analytics';
 import { errorTracker } from './services/errorTracking';
 import { Header } from './components/Header';
 import { useSearch } from './hooks/useSearch';
+import { Routes, Route } from 'react-router-dom';
+import ProfilePage from './components/ProfilePage';
+import { CollectionsProvider } from './contexts/CollectionsContext';
 
 
 function App() {
@@ -189,35 +192,46 @@ function App() {
         isSearching={isSearching}
       />
       
-      <main className="relative">
-        {error ? (
-          <ErrorState message={error} onRetry={loadShopData} />
-        ) : (
-          <>
-            <div className="py-8">
-              <div className="max-w-[1800px] mx-auto px-6">
-                <TabGroup
-                  tabs={tabs}
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                />
-              </div>
-            </div>
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            <main className="relative">
+              {error ? (
+                <ErrorState message={error} onRetry={loadShopData} />
+              ) : (
+                <>
+                  <div className="py-8">
+                    <div className="max-w-[1800px] mx-auto px-6">
+                      <TabGroup
+                        tabs={tabs}
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                      />
+                    </div>
+                  </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {content}
-              </motion.div>
-            </AnimatePresence>
-          </>
-        )}
-      </main>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeTab}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {content}
+                    </motion.div>
+                  </AnimatePresence>
+                </>
+              )}
+            </main>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={<ProfilePage />} 
+        />
+      </Routes>
 
       <AnimatePresence>
         {selectedItem && (
@@ -259,7 +273,9 @@ export default function AppWithProviders() {
       <NotificationProvider>
         <ThemeProvider>
           <WishlistProvider>
-            <App />
+            <CollectionsProvider>
+              <App />
+            </CollectionsProvider>
           </WishlistProvider>
         </ThemeProvider>
       </NotificationProvider>
