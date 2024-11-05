@@ -2,10 +2,11 @@ import { format } from 'date-fns';
 import { RotateCcw, Calendar, Search, Sun, Moon, X, User } from 'lucide-react';
 import { ShopTimer } from './ShopTimer';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { AuthModal } from './AuthModal';
 
 interface HeaderProps {
   isLoading: boolean;
@@ -18,9 +19,10 @@ interface HeaderProps {
 }
 
 export function Header({ isLoading, onRefresh, theme, onThemeToggle, query, setQuery, isSearching }: HeaderProps) {
-  const { user, signIn } = useAuth();
+  const { user, signIn, signOut } = useAuth();
   const location = useLocation();
   const [fullPhotoURL, setFullPhotoURL] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -33,6 +35,43 @@ export function Header({ isLoading, onRefresh, theme, onThemeToggle, query, setQ
       fetchFullPhoto();
     }
   }, [user]);
+
+  const ProfileButton = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [fullPhotoURL, setFullPhotoURL] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (user) {
+        const fetchFullPhoto = async () => {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setFullPhotoURL(userDoc.data().fullPhotoURL);
+          }
+        };
+        fetchFullPhoto();
+      }
+    }, [user]);
+
+    return (
+      <button
+        onClick={() => navigate('/profile')}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] 
+                  hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-colors"
+      >
+        <div className="w-7 h-7 rounded-full overflow-hidden border border-black/10 dark:border-white/10">
+          <img 
+            src={fullPhotoURL || user?.photoURL || '/default-avatar.png'} 
+            alt={user?.displayName || 'User'} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <span className="text-sm font-medium text-black/70 dark:text-white/70">
+          {user?.displayName}
+        </span>
+      </button>
+    );
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-black/[0.06] dark:border-white/[0.06] bg-white/80 dark:bg-black/80 backdrop-blur-xl">
@@ -143,31 +182,27 @@ export function Header({ isLoading, onRefresh, theme, onThemeToggle, query, setQ
             <RotateCcw className={`w-5 h-5 text-black/70 dark:text-white/70 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
-          {user ? (
-            <Link
-              to="/profile"
-              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-blue-500/10 to-violet-500/10">
-                {fullPhotoURL ? (
-                  <img src={fullPhotoURL} alt={user.displayName} className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-full h-full p-1.5 text-black/40 dark:text-white/40" />
-                )}
-              </div>
-            </Link>
-          ) : (
-            <button
-              onClick={signIn}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg
-                       bg-gradient-to-br from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600
-                       text-white text-sm font-medium transition-all"
-            >
-              Sign In
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {user ? (
+              <ProfileButton />
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-violet-500 
+                         text-white font-medium hover:from-blue-600 hover:to-violet-600 
+                         transition-all"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </header>
   );
 } 

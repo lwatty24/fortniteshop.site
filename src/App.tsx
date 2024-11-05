@@ -36,6 +36,7 @@ import { useSearch } from './hooks/useSearch';
 import { Routes, Route } from 'react-router-dom';
 import ProfilePage from './components/ProfilePage';
 import { CollectionsProvider } from './contexts/CollectionsContext';
+import { SharedCollectionView } from './components/SharedCollectionView';
 
 
 function App() {
@@ -231,6 +232,7 @@ function App() {
           path="/profile" 
           element={<ProfilePage />} 
         />
+        <Route path="/collection/:shareId" element={<SharedCollectionView />} />
       </Routes>
 
       <AnimatePresence>

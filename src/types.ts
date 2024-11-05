@@ -36,3 +36,14 @@ export interface ShopSection {
   name: string;
   items: ShopItem[];
 }
+
+export interface Collection {
+  id: string;
+  name: string;
+  description?: string;
+  items: ShopItem[];
+  createdAt: number;
+  userId: string;
+  isPublic: boolean;
+  shareId?: string;
+}

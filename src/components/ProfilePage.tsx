@@ -25,6 +25,7 @@ const ProfilePage = () => {
   const { collections, isLoading, error } = useCollections();
   const [showNewCollection, setShowNewCollection] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const [needsProfilePicture, setNeedsProfilePicture] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -35,6 +36,19 @@ const ProfilePage = () => {
         }
       };
       fetchFullPhoto();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && !user.photoURL) {
+      const checkUserProfile = async () => {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || !userDoc.data().fullPhotoURL) {
+          setNeedsProfilePicture(true);
+          setShowPictureUpload(true);
+        }
+      };
+      checkUserProfile();
     }
   }, [user]);
 
@@ -71,6 +85,13 @@ const ProfilePage = () => {
       color: 'from-amber-500/20 to-yellow-500/20'
     }
   ];
+
+  const handleClosePictureUpload = () => {
+    if (!needsProfilePicture || (user && user.photoURL)) {
+      setShowPictureUpload(false);
+      setNeedsProfilePicture(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
@@ -261,8 +282,9 @@ const ProfilePage = () => {
       {showPictureUpload && (
         <ProfilePictureUpload
           isOpen={showPictureUpload}
-          onClose={() => setShowPictureUpload(false)}
+          onClose={handleClosePictureUpload}
           currentPhotoURL={fullPhotoURL || user.photoURL}
+          required={needsProfilePicture}
         />
       )}
 

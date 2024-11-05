@@ -11,6 +11,7 @@ interface ProfilePictureUploadProps {
   isOpen: boolean;
   onClose: () => void;
   currentPhotoURL: string | null;
+  required?: boolean;
 }
 
 // Add image compression function
@@ -49,7 +50,7 @@ const compressImage = (file: File): Promise<string> => {
   });
 };
 
-export function ProfilePictureUpload({ isOpen, onClose, currentPhotoURL }: ProfilePictureUploadProps) {
+export function ProfilePictureUpload({ isOpen, onClose, currentPhotoURL, required }: ProfilePictureUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,11 @@ export function ProfilePictureUpload({ isOpen, onClose, currentPhotoURL }: Profi
             </div>
 
             <div className="p-6 space-y-6">
+              {required && (
+                <p className="text-sm text-black/60 dark:text-white/60 text-center">
+                  Please set a profile picture to continue
+                </p>
+              )}
               <div className="flex justify-center">
                 <div className="relative group">
                   <div className="w-32 h-32 rounded-full overflow-hidden bg-black/5 dark:bg-white/5">
@@ -152,8 +158,10 @@ export function ProfilePictureUpload({ isOpen, onClose, currentPhotoURL }: Profi
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
+                  disabled={required}
                   className="flex-1 p-3 rounded-xl border border-black/10 dark:border-white/10 
-                           hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                           hover:bg-black/5 dark:hover:bg-white/5 transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

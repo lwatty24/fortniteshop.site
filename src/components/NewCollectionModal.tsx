@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useState } from 'react';
 import { useCollections } from '../contexts/CollectionsContext';
+import { nanoid } from 'nanoid';
+import { toast } from 'sonner';
 
 interface NewCollectionModalProps {
   isOpen: boolean;
@@ -16,10 +18,23 @@ export function NewCollectionModal({ isOpen, onClose }: NewCollectionModalProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addCollection(name, description);
-    onClose();
-    setName('');
-    setDescription('');
+    try {
+      await addCollection({
+        name,
+        description,
+        items: [],
+        createdAt: Date.now(),
+        isPublic: false,
+        shareId: nanoid(10)
+      });
+      toast.success('Collection created');
+      onClose();
+      setName('');
+      setDescription('');
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      toast.error('Failed to create collection');
+    }
   };
 
   return createPortal(
