@@ -1,5 +1,5 @@
 export async function fetchShopData(signal?: AbortSignal) {
-  const response = await fetch('https://fortnite-api.com/v2/shop/br', {
+  const response = await fetch('https://fortnite-api.com/v2/shop/', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
